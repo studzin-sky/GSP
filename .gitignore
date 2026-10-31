@@ -1,0 +1,19 @@
+# Python
+.venv/
+__pycache__/
+*.pyc
+
+# Local config & credentials (see .env.example)
+.env
+.env.*
+!.env.example
+.secrets/
+
+# Personal workout data
+backups/
+*.fit
+
+# Editors / OS
+.vscode/
+.idea/
+.DS_Store
