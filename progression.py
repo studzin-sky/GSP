@@ -54,7 +54,7 @@ TOKENSTORE = _path(os.environ.get("GSP_TOKENSTORE") or ".secrets/garminconnect")
 BACKUP_DIR = _path(os.environ.get("GSP_BACKUP_DIR") or "backups")
 DEFAULT_DAYS = int(os.environ.get("GSP_DAYS") or 7)
 DEVICE_ID = os.environ.get("GSP_DEVICE_ID") or None  # default: last used device
-STRENGTH = "strength_training"
+SUPPORTED_TYPES = {"strength_training", "hiit"}
 
 # exerciseSets report weight in grams
 GRAMS_PER_UNIT = {"kilogram": 1000.0, "pound": 453.59237}
@@ -225,17 +225,17 @@ def find_latest_activity(workout: dict, activities: list[dict]) -> dict | None:
 def cmd_update(args: argparse.Namespace) -> None:
     client = connect()
     start = (dt.date.today() - dt.timedelta(days=args.days)).isoformat()
-    # strength_training is a sub-type of fitness_equipment in the activity search
+    # strength_training and hiit are sub-types of fitness_equipment in the activity search
     activities = [
         a for a in client.get_activities_by_date(start, activitytype="fitness_equipment")
-        if ((a.get("activityType") or {}).get("typeKey")) == STRENGTH
+        if ((a.get("activityType") or {}).get("typeKey")) in SUPPORTED_TYPES
     ]
     activities.sort(key=lambda a: a.get("startTimeLocal") or "", reverse=True)
-    print(f"{len(activities)} strength activities since {start}")
+    print(f"{len(activities)} strength/HIIT activities since {start}")
 
     workouts = [
         w for w in client.get_workouts(limit=200)
-        if ((w.get("sportType") or {}).get("sportTypeKey")) == STRENGTH
+        if ((w.get("sportType") or {}).get("sportTypeKey")) in SUPPORTED_TYPES
     ]
     if args.workout:
         wanted = {n.lower() for n in args.workout}
@@ -287,7 +287,7 @@ def cmd_push(args: argparse.Namespace) -> None:
     client = connect()
     wanted = {n.lower() for n in args.workout}
     for w in client.get_workouts(limit=200):
-        if ((w.get("sportType") or {}).get("sportTypeKey")) != STRENGTH:
+        if ((w.get("sportType") or {}).get("sportTypeKey")) not in SUPPORTED_TYPES:
             continue
         if wanted and (w.get("workoutName") or "").lower() not in wanted:
             continue
@@ -308,12 +308,12 @@ def cmd_dump(args: argparse.Namespace) -> None:
     if args.what == "workouts":
         data = [
             client.get_workout_by_id(w["workoutId"]) for w in client.get_workouts(limit=200)
-            if ((w.get("sportType") or {}).get("sportTypeKey")) == STRENGTH
+            if ((w.get("sportType") or {}).get("sportTypeKey")) in SUPPORTED_TYPES
         ]
     elif args.what == "activities":
         data = [
             a for a in client.get_activities(0, 30, activitytype="fitness_equipment")
-            if ((a.get("activityType") or {}).get("typeKey")) == STRENGTH
+            if ((a.get("activityType") or {}).get("typeKey")) in SUPPORTED_TYPES
         ]
     elif args.what == "devices":
         data = [
