@@ -1,0 +1,1065 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GSP · Garmin Strength Progression</title>
+  <style>
+    :root {
+      --bg: #0d1117;
+      --surface: #161b22;
+      --surface-2: #1f2630;
+      --border: #30363d;
+      --text: #e6edf3;
+      --muted: #8b949e;
+      --accent: #2f81f7;
+      --accent-hover: #388bfd;
+      --green: #238636;
+      --green-text: #3fb950;
+      --green-bg: rgba(46, 160, 67, 0.15);
+      --amber-text: #d29922;
+      --amber-bg: rgba(187, 128, 9, 0.15);
+      --blue-bg: rgba(56, 139, 253, 0.15);
+      --danger: #f85149;
+      --radius: 10px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.45;
+    }
+
+    .container {
+      max-width: 1080px;
+      margin: 0 auto;
+      padding: 20px 16px 64px;
+    }
+
+    /* Top Header */
+    .topbar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      padding: 14px 18px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      margin-bottom: 18px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .brand-badge {
+      background: var(--accent);
+      color: #fff;
+      font-weight: 700;
+      font-size: 0.85rem;
+      padding: 4px 8px;
+      border-radius: 6px;
+      letter-spacing: 0.04em;
+    }
+
+    .brand h1 {
+      font-size: 1.05rem;
+      margin: 0;
+      font-weight: 600;
+    }
+
+    .session-controls {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .watch-pill, .user-pill {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      padding: 6px 11px;
+      border-radius: 8px;
+      font-size: 0.85rem;
+    }
+
+    .watch-pill label {
+      color: var(--muted);
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    select, input[type="number"], input[type="email"], input[type="password"], input[type="text"] {
+      background: var(--bg);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 6px 9px;
+      font-size: 0.88rem;
+    }
+
+    select:focus, input:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+
+    button {
+      cursor: pointer;
+      border: 1px solid var(--border);
+      background: var(--surface-2);
+      color: var(--text);
+      padding: 7px 13px;
+      border-radius: 7px;
+      font-size: 0.86rem;
+      font-weight: 500;
+      transition: background 0.15s, border-color 0.15s;
+    }
+
+    button:hover:not(:disabled) {
+      background: #293240;
+      border-color: #484f58;
+    }
+
+    button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .btn-primary {
+      background: var(--green);
+      border-color: rgba(240, 246, 252, 0.1);
+      color: #fff;
+      font-weight: 600;
+    }
+
+    .btn-primary:hover:not(:disabled) {
+      background: #2ea043;
+    }
+
+    .btn-accent {
+      background: var(--accent);
+      border-color: rgba(240, 246, 252, 0.1);
+      color: #fff;
+      font-weight: 600;
+    }
+
+    .btn-accent:hover:not(:disabled) {
+      background: var(--accent-hover);
+    }
+
+    .btn-sm {
+      padding: 4px 9px;
+      font-size: 0.78rem;
+    }
+
+    /* Login Card */
+    .login-card {
+      max-width: 440px;
+      margin: 48px auto;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px;
+    }
+
+    .login-card h2 {
+      margin: 0 0 8px;
+      font-size: 1.15rem;
+    }
+
+    .login-card p {
+      margin: 0 0 18px;
+      color: var(--muted);
+      font-size: 0.88rem;
+    }
+
+    .form-group {
+      margin-bottom: 14px;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 0.82rem;
+      color: var(--muted);
+      margin-bottom: 5px;
+    }
+
+    .form-group input {
+      width: 100%;
+      padding: 8px 10px;
+    }
+
+    /* Action Toolbar */
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 12px 16px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      margin-bottom: 18px;
+    }
+
+    .toolbar-left, .toolbar-right {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .scan-summary {
+      font-size: 0.85rem;
+      color: var(--muted);
+    }
+
+    .checkbox-label {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.86rem;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    /* Alerts / Banners */
+    .banner {
+      padding: 12px 16px;
+      border-radius: var(--radius);
+      margin-bottom: 16px;
+      font-size: 0.88rem;
+      border: 1px solid var(--border);
+    }
+
+    .banner-error {
+      background: rgba(248, 81, 73, 0.12);
+      border-color: var(--danger);
+      color: #ff7b72;
+    }
+
+    .banner-success {
+      background: var(--green-bg);
+      border-color: var(--green);
+      color: var(--green-text);
+    }
+
+    /* Sections */
+    .section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin: 22px 0 10px;
+    }
+
+    .section-header h2 {
+      font-size: 0.95rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--muted);
+      margin: 0;
+    }
+
+    /* Workout Card */
+    .workout-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      margin-bottom: 14px;
+      overflow: hidden;
+    }
+
+    .workout-card.has-changes {
+      border-color: rgba(56, 139, 253, 0.45);
+    }
+
+    .workout-header {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 12px 16px;
+      background: var(--surface-2);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .workout-title-group {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .workout-name {
+      font-weight: 600;
+      font-size: 1rem;
+    }
+
+    .sport-tag {
+      font-size: 0.72rem;
+      padding: 2px 7px;
+      border-radius: 99px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      color: var(--muted);
+      text-transform: uppercase;
+    }
+
+    .activity-match {
+      font-size: 0.82rem;
+      color: var(--muted);
+    }
+
+    .activity-match strong {
+      color: var(--text);
+    }
+
+    /* Step Table */
+    .steps-table-wrap {
+      overflow-x: auto;
+    }
+
+    table.steps-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.87rem;
+    }
+
+    .steps-table th, .steps-table td {
+      padding: 9px 14px;
+      text-align: left;
+      border-bottom: 1px solid rgba(48, 54, 61, 0.6);
+    }
+
+    .steps-table th {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: var(--muted);
+      background: rgba(13, 17, 23, 0.35);
+    }
+
+    .steps-table tr:last-child td {
+      border-bottom: none;
+    }
+
+    .steps-table tr.row-changed {
+      background: rgba(46, 160, 67, 0.06);
+    }
+
+    .steps-table tr.row-edited {
+      background: rgba(56, 139, 253, 0.08);
+    }
+
+    .sets-badge {
+      font-size: 0.75rem;
+      color: var(--muted);
+      margin-left: 6px;
+    }
+
+    .logged-sets {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 0.81rem;
+      color: var(--muted);
+    }
+
+    .edit-cell {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .old-val {
+      color: var(--muted);
+      text-decoration: line-through;
+      font-size: 0.8rem;
+    }
+
+    .arrow {
+      color: var(--muted);
+      font-size: 0.8rem;
+    }
+
+    .step-input {
+      width: 78px;
+      padding: 4px 7px;
+      font-size: 0.85rem;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    }
+
+    .unit-suffix {
+      color: var(--muted);
+      font-size: 0.8rem;
+    }
+
+    .badge {
+      display: inline-block;
+      font-size: 0.73rem;
+      font-weight: 600;
+      padding: 2px 8px;
+      border-radius: 99px;
+    }
+
+    .badge-updated {
+      background: var(--green-bg);
+      color: var(--green-text);
+    }
+
+    .badge-edited {
+      background: var(--blue-bg);
+      color: #58a6ff;
+    }
+
+    .badge-unchanged {
+      background: rgba(139, 148, 158, 0.12);
+      color: var(--muted);
+    }
+
+    .badge-unmatched {
+      background: var(--amber-bg);
+      color: var(--amber-text);
+    }
+
+    .extra-sets-note {
+      padding: 8px 16px;
+      font-size: 0.8rem;
+      color: var(--muted);
+      background: rgba(187, 128, 9, 0.08);
+      border-top: 1px solid var(--border);
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 28px;
+      color: var(--muted);
+      background: var(--surface);
+      border: 1px dashed var(--border);
+      border-radius: var(--radius);
+      font-size: 0.9rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Top Header -->
+    <header class="topbar">
+      <div class="brand">
+        <span class="brand-badge">GSP</span>
+        <h1>Garmin Strength Progression</h1>
+      </div>
+
+      <div id="sessionControls" class="session-controls hidden">
+        <div class="watch-pill" title="Target Garmin watch to receive updated workouts">
+          <label for="deviceSelect">Watch</label>
+          <select id="deviceSelect"></select>
+        </div>
+
+        <div class="user-pill">
+          <span id="userNameText">User</span>
+          <button id="logoutBtn" class="btn-sm" type="button">Logout</button>
+        </div>
+      </div>
+    </header>
+
+    <div id="bannerArea"></div>
+
+    <!-- Login View -->
+    <section id="loginSection" class="login-card hidden">
+      <h2>Connect Your Garmin Account</h2>
+      <p>
+        Sign in once to save session tokens in <code>.secrets/garminconnect</code>.
+        Your connected Garmin watch will be detected automatically.
+      </p>
+
+      <form id="loginForm">
+        <div class="form-group">
+          <label for="emailInput">Garmin Email</label>
+          <input id="emailInput" type="email" required autocomplete="username" placeholder="you@example.com" />
+        </div>
+        <div class="form-group">
+          <label for="passwordInput">Password</label>
+          <input id="passwordInput" type="password" required autocomplete="current-password" />
+        </div>
+        <button id="loginSubmitBtn" type="submit" class="btn-accent" style="width: 100%;">
+          Log In
+        </button>
+      </form>
+
+      <form id="mfaForm" class="hidden">
+        <div class="form-group">
+          <label for="mfaInput">Two-Factor Authentication (MFA) Code</label>
+          <input id="mfaInput" type="text" inputmode="numeric" autocomplete="one-time-code" placeholder="6-digit code" required />
+        </div>
+        <button id="mfaSubmitBtn" type="submit" class="btn-accent" style="width: 100%;">
+          Verify MFA Code
+        </button>
+      </form>
+    </section>
+
+    <!-- Main App View -->
+    <main id="appSection" class="hidden">
+      <div class="toolbar">
+        <div class="toolbar-left">
+          <label class="checkbox-label">
+            Lookback
+            <input id="daysInput" type="number" min="1" max="90" value="7" style="width: 64px;" />
+            days
+          </label>
+          <button id="scanBtn" type="button" class="btn-accent">Scan Activities</button>
+          <span id="scanSummary" class="scan-summary"></span>
+        </div>
+
+        <div class="toolbar-right">
+          <label class="checkbox-label" title="Queue updated templates to your selected watch for next sync">
+            <input id="pushToggle" type="checkbox" checked />
+            Queue to Watch
+          </label>
+          <button id="updateSelectedBtn" type="button" class="btn-primary" disabled>
+            Update Selected (0)
+          </button>
+        </div>
+      </div>
+
+      <div id="readySection">
+        <div class="section-header">
+          <h2>Ready to Update</h2>
+        </div>
+        <div id="readyList"></div>
+      </div>
+
+      <div id="otherSection">
+        <div class="section-header">
+          <h2>Up to Date / No Recent Activity</h2>
+        </div>
+        <div id="otherList"></div>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    const state = {
+      status: null,
+      preview: null,
+      selectedWorkouts: new Set(),
+      // workoutId -> { slotIndex -> { weightValue, repsValue, manual: bool } }
+      edits: {},
+    };
+
+    const el = (id) => document.getElementById(id);
+
+    function showBanner(message, type = "error") {
+      const area = el("bannerArea");
+      if (!message) {
+        area.innerHTML = "";
+        return;
+      }
+      area.innerHTML = `<div class="banner banner-${type}">${escapeHtml(message)}</div>`;
+    }
+
+    function escapeHtml(str) {
+      return String(str ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+    }
+
+    async function api(path, options = {}) {
+      const res = await fetch(path, {
+        headers: { "Content-Type": "application/json" },
+        ...options,
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(data.error || `Request failed (${res.status})`);
+      }
+      return data;
+    }
+
+    function renderHeaderStatus() {
+      const s = state.status;
+      if (!s || !s.loggedIn) {
+        el("sessionControls").classList.add("hidden");
+        el("loginSection").classList.remove("hidden");
+        el("appSection").classList.add("hidden");
+        return;
+      }
+
+      el("sessionControls").classList.remove("hidden");
+      el("loginSection").classList.add("hidden");
+      el("appSection").classList.remove("hidden");
+      el("userNameText").textContent = s.userName || "Garmin User";
+
+      const select = el("deviceSelect");
+      select.innerHTML = "";
+      if (!s.devices || s.devices.length === 0) {
+        const opt = document.createElement("option");
+        opt.value = "";
+        opt.textContent = "Auto (Last Used Watch)";
+        select.appendChild(opt);
+      } else {
+        for (const d of s.devices) {
+          const opt = document.createElement("option");
+          opt.value = d.deviceId;
+          const fw = d.firmware ? ` (v${d.firmware})` : "";
+          const isLast = s.lastUsedDevice && s.lastUsedDevice.deviceId === d.deviceId;
+          opt.textContent = `${d.productDisplayName || d.displayName}${fw}${isLast ? " ★" : ""}`;
+          if (d.deviceId === s.selectedDeviceId) {
+            opt.selected = true;
+          }
+          select.appendChild(opt);
+        }
+      }
+    }
+
+    function initEditsFromPreview(templates) {
+      state.selectedWorkouts.clear();
+      state.edits = {};
+      for (const t of templates) {
+        state.edits[t.workoutId] = {};
+        if (t.hasChanges) {
+          state.selectedWorkouts.add(t.workoutId);
+        }
+        for (const step of t.steps) {
+          state.edits[t.workoutId][step.slotIndex] = {
+            weightValue: step.newWeight,
+            repsValue: step.newReps,
+            manual: false,
+          };
+        }
+      }
+    }
+
+    function updateToolbarButton() {
+      const count = state.selectedWorkouts.size;
+      const btn = el("updateSelectedBtn");
+      btn.disabled = count === 0;
+      btn.textContent = `Update Selected (${count})`;
+    }
+
+    function isStepModified(step, edit) {
+      if (!edit) return false;
+      const wDiff =
+        edit.weightValue !== null &&
+        edit.weightValue !== "" &&
+        (step.oldWeight === null || Math.abs(Number(edit.weightValue) - Number(step.oldWeight)) > 1e-6);
+      const rDiff =
+        step.isRepsStep &&
+        edit.repsValue !== null &&
+        edit.repsValue !== "" &&
+        (step.oldReps === null || Number(edit.repsValue) !== Number(step.oldReps));
+      return Boolean(wDiff || rDiff);
+    }
+
+    function renderWorkoutCard(t) {
+      const isSelected = state.selectedWorkouts.has(t.workoutId);
+      const card = document.createElement("div");
+      card.className = `workout-card ${isSelected ? "has-changes" : ""}`;
+
+      const act = t.matchedActivity;
+      const matchHtml = act
+        ? `Matched activity: <strong>${escapeHtml(act.activityName)}</strong> (${escapeHtml(act.startTimeLocal)})`
+        : `No matching activity in the last ${state.preview.days} days`;
+
+      const rowsHtml = t.steps
+        .map((step) => {
+          const edit = state.edits[t.workoutId]?.[step.slotIndex] || {};
+          const modified = isStepModified(step, edit);
+          const rowClass = edit.manual
+            ? "row-edited"
+            : step.changed
+            ? "row-changed"
+            : "";
+
+          // Weight cell
+          const showOldWeight =
+            step.oldWeight !== null &&
+            edit.weightValue !== null &&
+            Math.abs(Number(edit.weightValue) - Number(step.oldWeight)) > 1e-6;
+          const weightHtml = `
+            <div class="edit-cell">
+              ${showOldWeight ? `<span class="old-val">${step.oldWeight}</span><span class="arrow">→</span>` : ""}
+              <input
+                type="number"
+                step="0.25"
+                min="0"
+                class="step-input"
+                data-workout-id="${t.workoutId}"
+                data-slot-index="${step.slotIndex}"
+                data-field="weightValue"
+                value="${edit.weightValue ?? ""}"
+                placeholder="BW"
+              />
+              <span class="unit-suffix">${escapeHtml(step.unitLabel)}</span>
+            </div>
+          `;
+
+          // Reps / Condition cell
+          let repsHtml = "";
+          if (step.isRepsStep) {
+            const showOldReps =
+              step.oldReps !== null &&
+              edit.repsValue !== null &&
+              Number(edit.repsValue) !== Number(step.oldReps);
+            repsHtml = `
+              <div class="edit-cell">
+                ${showOldReps ? `<span class="old-val">${step.oldReps}</span><span class="arrow">→</span>` : ""}
+                <input
+                  type="number"
+                  step="1"
+                  min="1"
+                  class="step-input"
+                  data-workout-id="${t.workoutId}"
+                  data-slot-index="${step.slotIndex}"
+                  data-field="repsValue"
+                  value="${edit.repsValue ?? ""}"
+                />
+                <span class="unit-suffix">reps</span>
+              </div>
+            `;
+          } else if (step.endConditionKey === "time" && step.durationSecs) {
+            repsHtml = `<span class="unit-suffix">${step.durationSecs}s (time interval)</span>`;
+          } else {
+            repsHtml = `<span class="unit-suffix">${escapeHtml(step.endConditionKey || "lap")}</span>`;
+          }
+
+          // Status badge
+          let badgeHtml = `<span class="badge badge-unchanged">Unchanged</span>`;
+          if (edit.manual && modified) {
+            badgeHtml = `<span class="badge badge-edited">Edited</span>`;
+          } else if (step.changed && modified) {
+            badgeHtml = `<span class="badge badge-updated">Updated</span>`;
+          } else if (act && !step.matched) {
+            badgeHtml = `<span class="badge badge-unmatched">No sets logged</span>`;
+          }
+
+          return `
+            <tr class="${rowClass}">
+              <td>
+                <strong>${escapeHtml(step.exercise)}</strong>
+                <span class="sets-badge">${step.setsCount} set${step.setsCount > 1 ? "s" : ""}</span>
+              </td>
+              <td class="logged-sets">
+                ${step.setsDoneText ? escapeHtml(step.setsDoneText) : "—"}
+              </td>
+              <td>${weightHtml}</td>
+              <td>${repsHtml}</td>
+              <td>${badgeHtml}</td>
+            </tr>
+          `;
+        })
+        .join("");
+
+      const extraHtml =
+        t.extraSetsCount > 0
+          ? `<div class="extra-sets-note">Ignored ${t.extraSetsCount} extra set(s) not in template: ${escapeHtml(
+              t.extraExercises.join(", ")
+            )}</div>`
+          : "";
+
+      card.innerHTML = `
+        <div class="workout-header">
+          <div class="workout-title-group">
+            <label class="checkbox-label">
+              <input
+                type="checkbox"
+                class="workout-check"
+                data-workout-id="${t.workoutId}"
+                ${isSelected ? "checked" : ""}
+              />
+              <span class="workout-name">${escapeHtml(t.workoutName)}</span>
+            </label>
+            <span class="sport-tag">${escapeHtml(t.sportType.replace("_", " "))}</span>
+            <span class="activity-match">${matchHtml}</span>
+          </div>
+          <div>
+            <button
+              type="button"
+              class="btn-sm push-single-btn"
+              data-workout-id="${t.workoutId}"
+              data-workout-name="${escapeHtml(t.workoutName)}"
+              title="Queue current template to watch without editing"
+            >
+              Push to Watch
+            </button>
+          </div>
+        </div>
+        <div class="steps-table-wrap">
+          <table class="steps-table">
+            <thead>
+              <tr>
+                <th>Exercise</th>
+                <th>Logged Sets (Activity)</th>
+                <th>Target Weight</th>
+                <th>Target Reps / Time</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${rowsHtml}
+            </tbody>
+          </table>
+        </div>
+        ${extraHtml}
+      `;
+
+      return card;
+    }
+
+    function renderPreview() {
+      const p = state.preview;
+      if (!p) return;
+
+      el("scanSummary").textContent = `${p.activitiesCount} strength/HIIT activit${
+        p.activitiesCount === 1 ? "y" : "ies"
+      } since ${p.startDate}`;
+
+      const readyList = el("readyList");
+      const otherList = el("otherList");
+      readyList.innerHTML = "";
+      otherList.innerHTML = "";
+
+      const readyTemplates = p.templates.filter((t) => t.hasChanges);
+      const otherTemplates = p.templates.filter((t) => !t.hasChanges);
+
+      if (readyTemplates.length === 0) {
+        readyList.innerHTML = `<div class="empty-state">No templates have pending changes from recent activities. You can still edit any template below or increase lookback days.</div>`;
+      } else {
+        for (const t of readyTemplates) {
+          readyList.appendChild(renderWorkoutCard(t));
+        }
+      }
+
+      if (otherTemplates.length === 0) {
+        el("otherSection").classList.add("hidden");
+      } else {
+        el("otherSection").classList.remove("hidden");
+        for (const t of otherTemplates) {
+          otherList.appendChild(renderWorkoutCard(t));
+        }
+      }
+
+      bindCardEvents();
+      updateToolbarButton();
+    }
+
+    function bindCardEvents() {
+      document.querySelectorAll(".workout-check").forEach((chk) => {
+        chk.addEventListener("change", (e) => {
+          const wid = Number(e.target.dataset.workoutId);
+          if (e.target.checked) {
+            state.selectedWorkouts.add(wid);
+          } else {
+            state.selectedWorkouts.delete(wid);
+          }
+          e.target.closest(".workout-card")?.classList.toggle("has-changes", e.target.checked);
+          updateToolbarButton();
+        });
+      });
+
+      document.querySelectorAll(".step-input").forEach((inp) => {
+        inp.addEventListener("change", (e) => {
+          const wid = Number(e.target.dataset.workoutId);
+          const slot = Number(e.target.dataset.slotIndex);
+          const field = e.target.dataset.field;
+          const raw = e.target.value.trim();
+
+          if (!state.edits[wid]?.[slot]) return;
+          state.edits[wid][slot][field] = raw === "" ? null : Number(raw);
+          state.edits[wid][slot].manual = true;
+          state.selectedWorkouts.add(wid);
+          renderPreview();
+        });
+      });
+
+      document.querySelectorAll(".push-single-btn").forEach((btn) => {
+        btn.addEventListener("click", async (e) => {
+          const wid = Number(e.currentTarget.dataset.workoutId);
+          const wname = e.currentTarget.dataset.workoutName;
+          const deviceId = el("deviceSelect").value || null;
+          e.currentTarget.disabled = true;
+          try {
+            await api("/api/push", {
+              method: "POST",
+              body: JSON.stringify({ workoutId: wid, deviceId }),
+            });
+            showBanner(`Queued "${wname}" for your watch on next sync.`, "success");
+          } catch (err) {
+            showBanner(err.message, "error");
+          } finally {
+            e.currentTarget.disabled = false;
+          }
+        });
+      });
+    }
+
+    async function loadPreview() {
+      const days = Number(el("daysInput").value) || 7;
+      const scanBtn = el("scanBtn");
+      scanBtn.disabled = true;
+      scanBtn.textContent = "Scanning...";
+      showBanner("");
+      try {
+        const preview = await api(`/api/preview?days=${encodeURIComponent(days)}`);
+        state.preview = preview;
+        initEditsFromPreview(preview.templates);
+        renderPreview();
+      } catch (err) {
+        showBanner(err.message, "error");
+      } finally {
+        scanBtn.disabled = false;
+        scanBtn.textContent = "Scan Activities";
+      }
+    }
+
+    async function init() {
+      try {
+        const status = await api("/api/status");
+        state.status = status;
+        if (status.defaultDays) {
+          el("daysInput").value = status.defaultDays;
+        }
+        renderHeaderStatus();
+        if (status.loggedIn) {
+          await loadPreview();
+        }
+      } catch (err) {
+        showBanner(err.message, "error");
+      }
+    }
+
+    // Event Listeners
+    el("loginForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const email = el("emailInput").value.trim();
+      const password = el("passwordInput").value;
+      const btn = el("loginSubmitBtn");
+      btn.disabled = true;
+      btn.textContent = "Signing in...";
+      showBanner("");
+      try {
+        const res = await api("/api/login", {
+          method: "POST",
+          body: JSON.stringify({ email, password }),
+        });
+        if (res.needsMfa) {
+          el("loginForm").classList.add("hidden");
+          el("mfaForm").classList.remove("hidden");
+          el("mfaInput").focus();
+          return;
+        }
+        state.status = res.status;
+        el("passwordInput").value = "";
+        renderHeaderStatus();
+        await loadPreview();
+      } catch (err) {
+        showBanner(err.message, "error");
+      } finally {
+        btn.disabled = false;
+        btn.textContent = "Log In";
+      }
+    });
+
+    el("mfaForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const code = el("mfaInput").value.trim();
+      const btn = el("mfaSubmitBtn");
+      btn.disabled = true;
+      btn.textContent = "Verifying...";
+      showBanner("");
+      try {
+        const res = await api("/api/mfa", {
+          method: "POST",
+          body: JSON.stringify({ code }),
+        });
+        state.status = res.status;
+        el("mfaInput").value = "";
+        el("mfaForm").classList.add("hidden");
+        el("loginForm").classList.remove("hidden");
+        renderHeaderStatus();
+        await loadPreview();
+      } catch (err) {
+        showBanner(err.message, "error");
+      } finally {
+        btn.disabled = false;
+        btn.textContent = "Verify MFA Code";
+      }
+    });
+
+    el("logoutBtn").addEventListener("click", async () => {
+      try {
+        const res = await api("/api/logout", { method: "POST", body: "{}" });
+        state.status = res.status;
+        state.preview = null;
+        renderHeaderStatus();
+        showBanner("Logged out and cleared local session tokens.", "success");
+      } catch (err) {
+        showBanner(err.message, "error");
+      }
+    });
+
+    el("scanBtn").addEventListener("click", loadPreview);
+
+    el("updateSelectedBtn").addEventListener("click", async () => {
+      if (state.selectedWorkouts.size === 0) return;
+      const btn = el("updateSelectedBtn");
+      const push = el("pushToggle").checked;
+      const deviceId = el("deviceSelect").value || null;
+
+      const workoutsPayload = [];
+      for (const wid of state.selectedWorkouts) {
+        const stepMap = state.edits[wid] || {};
+        const steps = Object.entries(stepMap).map(([slotIndex, vals]) => ({
+          slotIndex: Number(slotIndex),
+          weightValue: vals.weightValue,
+          repsValue: vals.repsValue,
+        }));
+        workoutsPayload.push({ workoutId: wid, steps });
+      }
+
+      btn.disabled = true;
+      btn.textContent = "Updating...";
+      showBanner("");
+      try {
+        const res = await api("/api/update", {
+          method: "POST",
+          body: JSON.stringify({
+            deviceId,
+            push,
+            workouts: workoutsPayload,
+          }),
+        });
+        const names = res.results.map((r) => r.workoutName).join(", ");
+        const watchMsg = push ? " and queued for watch on next sync" : "";
+        showBanner(`Updated ${res.results.length} template(s) (${names})${watchMsg}. Backups saved to backups/.`, "success");
+        await loadPreview();
+      } catch (err) {
+        showBanner(err.message, "error");
+        updateToolbarButton();
+      }
+    });
+
+    init();
+  </script>
+</body>
+</html>

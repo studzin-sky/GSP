@@ -2,6 +2,7 @@
 # Update Garmin strength workout templates with your latest reps/weight.
 #   ./update.sh              preview changes from the last 7 days, then confirm
 #   ./update.sh -n           dry run
+#   ./update.sh ui           open local web UI
 #   ./update.sh login        first-time login
 #   ./update.sh --help       all options
 set -euo pipefail
