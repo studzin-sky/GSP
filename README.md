@@ -18,6 +18,7 @@ cp .env.example .env     # optional settings, gitignored
 ## Usage
 
 ```bash
+./update.sh ui        # launch local web UI (login, preview diffs, edit & push)
 ./update.sh -n        # dry run: show what would change
 ./update.sh           # show changes, confirm, update + queue for watch
 ```

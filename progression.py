@@ -146,17 +146,28 @@ def top_set(sets: list[dict]) -> dict:
     return max(sets, key=lambda s: ((s.get("weight") or 0), (s.get("repetitionCount") or 0)))
 
 
-def plan_update(workout: dict, exercise_sets: list[dict]) -> tuple[dict, list[str]]:
-    """Return (updated_workout, list_of_change_descriptions)."""
+def plan_update_detailed(
+    workout: dict, exercise_sets: list[dict]
+) -> tuple[dict, list[str], dict[str, Any]]:
+    """Return (updated_workout, list_of_change_descriptions, structured_details)."""
     new = copy.deepcopy(workout)
     active = [s for s in exercise_sets if s.get("setType") == "ACTIVE"]
     active.sort(key=lambda s: s.get("startTime") or "")
     used = [False] * len(active)
     changes: list[str] = []
+    step_details: list[dict[str, Any]] = []
 
+    slot_index = 0
     for seg in new.get("workoutSegments") or []:
         for step, n_sets in iter_slots(seg.get("workoutSteps")):
             key = step_key(step)
+            unit = step_weight_unit(step)
+            unit_label = "lb" if unit == "pound" else "kg"
+            old_w = step.get("weightValue")
+            old_r = step.get("endConditionValue")
+            cond_key = ((step.get("endCondition") or {}).get("conditionTypeKey")) or ""
+            reps_mode = is_reps_step(step)
+
             # take the next n_sets unused sets of this exercise, in order
             chunk = []
             for i, s in enumerate(active):
@@ -165,40 +176,139 @@ def plan_update(workout: dict, exercise_sets: list[dict]) -> tuple[dict, list[st
                     chunk.append(s)
                     if len(chunk) == n_sets:
                         break
+
             if not chunk:
                 changes.append(f"  {fmt_ex(key)}: no sets found in activity, unchanged")
+                step_details.append({
+                    "slotIndex": slot_index,
+                    "stepId": step.get("stepId"),
+                    "exercise": fmt_ex(key),
+                    "category": key[0],
+                    "exerciseName": key[1],
+                    "setsCount": n_sets,
+                    "setsDone": [],
+                    "setsDoneText": "",
+                    "matched": False,
+                    "changed": False,
+                    "weightChanged": False,
+                    "repsChanged": False,
+                    "oldWeight": float(old_w) if old_w is not None else None,
+                    "newWeight": float(old_w) if old_w is not None else None,
+                    "unit": unit,
+                    "unitLabel": unit_label,
+                    "isRepsStep": reps_mode,
+                    "endConditionKey": cond_key,
+                    "oldReps": int(old_r) if (reps_mode and old_r is not None) else None,
+                    "newReps": int(old_r) if (reps_mode and old_r is not None) else None,
+                    "durationSecs": int(old_r) if (cond_key == "time" and old_r is not None) else None,
+                })
+                slot_index += 1
                 continue
 
             best = top_set(chunk)
-            unit = step_weight_unit(step)
-            old_w, old_r = step.get("weightValue"), step.get("endConditionValue")
             parts = []
+            weight_changed = False
+            reps_changed = False
+            final_w = float(old_w) if old_w is not None else None
+            final_r = int(old_r) if (reps_mode and old_r is not None) else None
 
             grams = best.get("weight")
             if grams:  # keep template weight for bodyweight / unlogged sets
                 new_w = round(grams / GRAMS_PER_UNIT.get(unit, 1000.0) * 4) / 4
+                final_w = new_w
                 if old_w is None or abs(float(old_w) - new_w) > 1e-6:
                     step["weightValue"] = new_w
                     if not step.get("weightUnit"):
                         step["weightUnit"] = {"unitKey": unit}
-                    parts.append(f"weight {old_w} -> {new_w} {'lb' if unit == 'pound' else 'kg'}")
+                    parts.append(f"weight {old_w} -> {new_w} {unit_label}")
+                    weight_changed = True
 
             reps = best.get("repetitionCount")
-            if reps and is_reps_step(step) and (old_r is None or int(old_r) != int(reps)):
-                step["endConditionValue"] = float(reps)
-                parts.append(f"reps {int(old_r) if old_r else old_r} -> {reps}")
+            if reps and reps_mode:
+                final_r = int(reps)
+                if old_r is None or int(old_r) != int(reps):
+                    step["endConditionValue"] = float(reps)
+                    parts.append(f"reps {int(old_r) if old_r else old_r} -> {reps}")
+                    reps_changed = True
 
-            done = ", ".join(
+            sets_done_list = [
                 f"{s.get('repetitionCount')}x{(s.get('weight') or 0) / 1000:g}kg" for s in chunk
-            )
+            ]
+            done = ", ".join(sets_done_list)
             label = f"  {fmt_ex(key)} [{done}]"
             changes.append(f"{label}: " + ("; ".join(parts) if parts else "unchanged"))
 
+            step_details.append({
+                "slotIndex": slot_index,
+                "stepId": step.get("stepId"),
+                "exercise": fmt_ex(key),
+                "category": key[0],
+                "exerciseName": key[1],
+                "setsCount": n_sets,
+                "setsDone": sets_done_list,
+                "setsDoneText": done,
+                "matched": True,
+                "changed": bool(weight_changed or reps_changed),
+                "weightChanged": weight_changed,
+                "repsChanged": reps_changed,
+                "oldWeight": float(old_w) if old_w is not None else None,
+                "newWeight": final_w,
+                "unit": unit,
+                "unitLabel": unit_label,
+                "isRepsStep": reps_mode,
+                "endConditionKey": cond_key,
+                "oldReps": int(old_r) if (reps_mode and old_r is not None) else None,
+                "newReps": final_r,
+                "durationSecs": int(old_r) if (cond_key == "time" and old_r is not None) else None,
+            })
+            slot_index += 1
+
     leftover = [s for i, s in enumerate(active) if not used[i]]
+    extra_names = sorted({fmt_ex(set_key(s)) for s in leftover}) if leftover else []
     if leftover:
-        names = sorted({fmt_ex(set_key(s)) for s in leftover})
-        changes.append(f"  (ignored {len(leftover)} extra set(s): {', '.join(names)})")
+        changes.append(f"  (ignored {len(leftover)} extra set(s): {', '.join(extra_names)})")
+
+    details = {
+        "steps": step_details,
+        "extraSetsCount": len(leftover),
+        "extraExercises": extra_names,
+        "hasChanges": new != workout,
+    }
+    return new, changes, details
+
+
+def plan_update(workout: dict, exercise_sets: list[dict]) -> tuple[dict, list[str]]:
+    """Return (updated_workout, list_of_change_descriptions)."""
+    new, changes, _ = plan_update_detailed(workout, exercise_sets)
     return new, changes
+
+
+def apply_step_overrides(workout: dict, step_overrides: list[dict[str, Any]]) -> dict:
+    """Return a copy of workout with user-specified weight/reps per slotIndex applied."""
+    new = copy.deepcopy(workout)
+    by_slot = {int(item["slotIndex"]): item for item in (step_overrides or []) if "slotIndex" in item}
+    slot_index = 0
+    for seg in new.get("workoutSegments") or []:
+        for step, _n_sets in iter_slots(seg.get("workoutSteps")):
+            override = by_slot.get(slot_index)
+            if override is not None:
+                unit = step_weight_unit(step)
+                w_val = override.get("weightValue")
+                if w_val is not None and w_val != "":
+                    new_w = round(float(w_val) * 4) / 4
+                    old_w = step.get("weightValue")
+                    if old_w is None or abs(float(old_w) - new_w) > 1e-6:
+                        step["weightValue"] = new_w
+                        if not step.get("weightUnit"):
+                            step["weightUnit"] = {"unitKey": unit}
+                r_val = override.get("repsValue")
+                if r_val is not None and r_val != "" and is_reps_step(step):
+                    new_r = float(int(float(r_val)))
+                    old_r = step.get("endConditionValue")
+                    if old_r is None or int(old_r) != int(new_r):
+                        step["endConditionValue"] = new_r
+            slot_index += 1
+    return new
 
 
 def activity_workout_id(activity: dict) -> int | None:
@@ -349,6 +459,11 @@ def main() -> None:
     d = sub.add_parser("dump", help="print raw JSON: workouts | activities | devices | <activityId>")
     d.add_argument("what")
 
+    ui = sub.add_parser("ui", help="start the local web UI")
+    ui.add_argument("--host", default="127.0.0.1", help="bind host (default 127.0.0.1)")
+    ui.add_argument("--port", type=int, default=8765, help="bind port (default 8765)")
+    ui.add_argument("--no-open", action="store_true", help="don't auto-open browser")
+
     argv = sys.argv[1:]
     if not argv or argv[0].startswith("-"):
         argv = ["update", *argv]
@@ -364,6 +479,9 @@ def main() -> None:
         cmd_push(args)
     elif args.cmd == "dump":
         cmd_dump(args)
+    elif args.cmd == "ui":
+        from ui import run_ui_server
+        run_ui_server(host=args.host, port=args.port, open_browser=not args.no_open)
 
 
 if __name__ == "__main__":
