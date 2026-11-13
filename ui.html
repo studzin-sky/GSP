@@ -457,6 +457,214 @@
       border-radius: var(--radius);
       font-size: 0.9rem;
     }
+
+    /* Navigation Tabs */
+    .nav-tabs {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 3px;
+    }
+
+    .nav-tab {
+      background: transparent;
+      border: none;
+      color: var(--muted);
+      padding: 5px 12px;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s, color 0.15s;
+    }
+
+    .nav-tab:hover {
+      color: var(--text);
+    }
+
+    .nav-tab.active {
+      background: var(--surface-2);
+      color: var(--text);
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+    }
+
+    /* Progress View */
+    .progress-toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .workout-pills {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .workout-pill {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--muted);
+      padding: 7px 14px;
+      border-radius: 8px;
+      font-size: 0.86rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: border-color 0.15s, color 0.15s, background 0.15s;
+    }
+
+    .workout-pill:hover {
+      color: var(--text);
+      border-color: var(--muted);
+    }
+
+    .workout-pill.active {
+      background: var(--blue-bg);
+      border-color: var(--accent);
+      color: var(--text);
+    }
+
+    .progress-meta {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: var(--muted);
+      font-size: 0.84rem;
+    }
+
+    .progress-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(440px, 1fr));
+      gap: 14px;
+    }
+
+    @media (max-width: 520px) {
+      .progress-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .exercise-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px 16px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .exercise-card-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .exercise-title {
+      font-size: 0.96rem;
+      font-weight: 600;
+      margin: 0;
+    }
+
+    .exercise-sub {
+      font-size: 0.8rem;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+
+    .exercise-badges {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-shrink: 0;
+    }
+
+    .delta-pill {
+      font-size: 0.76rem;
+      font-weight: 600;
+      padding: 2px 8px;
+      border-radius: 999px;
+      border: 1px solid transparent;
+    }
+
+    .delta-up {
+      background: var(--green-bg);
+      color: var(--green-text);
+      border-color: rgba(63, 185, 80, 0.35);
+    }
+
+    .delta-flat {
+      background: var(--surface-2);
+      color: var(--muted);
+      border-color: var(--border);
+    }
+
+    .delta-down {
+      background: var(--amber-bg);
+      color: var(--amber-text);
+      border-color: rgba(210, 153, 34, 0.35);
+    }
+
+    .chart-wrap {
+      position: relative;
+      width: 100%;
+    }
+
+    .chart-svg {
+      width: 100%;
+      height: auto;
+      display: block;
+      overflow: visible;
+    }
+
+    .chart-tooltip {
+      position: absolute;
+      pointer-events: none;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 5px 9px;
+      font-size: 0.78rem;
+      color: var(--text);
+      white-space: nowrap;
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45);
+      transform: translate(-50%, -115%);
+      z-index: 10;
+    }
+
+    .chart-tooltip .tt-date {
+      color: var(--muted);
+      font-size: 0.72rem;
+    }
+
+    .point-strip {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      border-top: 1px solid var(--border);
+      padding-top: 8px;
+    }
+
+    .point-chip {
+      font-size: 0.75rem;
+      color: var(--muted);
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 2px 7px;
+    }
+
+    .point-chip strong {
+      color: var(--text);
+      font-weight: 600;
+    }
   </style>
 </head>
 <body>
@@ -466,6 +674,10 @@
       <div class="brand">
         <span class="brand-badge">GSP</span>
         <h1>Garmin Strength Progression</h1>
+        <nav class="nav-tabs" aria-label="Views">
+          <button id="tabUpdate" type="button" class="nav-tab active" data-tab="update">Update</button>
+          <button id="tabProgress" type="button" class="nav-tab" data-tab="progress">Progress</button>
+        </nav>
       </div>
 
       <div id="sessionControls" class="session-controls hidden">
@@ -554,12 +766,27 @@
         <div id="otherList"></div>
       </div>
     </main>
+
+    <!-- Progress View -->
+    <section id="progressSection" class="hidden">
+      <div class="progress-toolbar">
+        <div id="progressWorkoutPills" class="workout-pills"></div>
+        <div class="progress-meta">
+          <span id="progressMetaText"></span>
+          <button id="refreshProgressBtn" type="button" class="btn-sm">Refresh</button>
+        </div>
+      </div>
+      <div id="progressGrid" class="progress-grid"></div>
+    </section>
   </div>
 
   <script>
     const state = {
       status: null,
       preview: null,
+      progress: null,
+      activeTab: "update",
+      selectedProgressWorkout: null,
       selectedWorkouts: new Set(),
       // workoutId -> { slotIndex -> { weightValue, repsValue, manual: bool } }
       edits: {},
@@ -596,18 +823,33 @@
       return data;
     }
 
+    function syncViewVisibility() {
+      const isProgress = state.activeTab === "progress";
+      el("tabUpdate").classList.toggle("active", !isProgress);
+      el("tabProgress").classList.toggle("active", isProgress);
+
+      const loggedIn = Boolean(state.status && state.status.loggedIn);
+      if (isProgress) {
+        el("loginSection").classList.add("hidden");
+        el("appSection").classList.add("hidden");
+        el("progressSection").classList.remove("hidden");
+      } else {
+        el("progressSection").classList.add("hidden");
+        el("loginSection").classList.toggle("hidden", loggedIn);
+        el("appSection").classList.toggle("hidden", !loggedIn);
+      }
+    }
+
     function renderHeaderStatus() {
       const s = state.status;
       if (!s || !s.loggedIn) {
         el("sessionControls").classList.add("hidden");
-        el("loginSection").classList.remove("hidden");
-        el("appSection").classList.add("hidden");
+        syncViewVisibility();
         return;
       }
 
       el("sessionControls").classList.remove("hidden");
-      el("loginSection").classList.add("hidden");
-      el("appSection").classList.remove("hidden");
+      syncViewVisibility();
       el("userNameText").textContent = s.userName || "Garmin User";
 
       const select = el("deviceSelect");
@@ -913,6 +1155,279 @@
       });
     }
 
+    function fmtShortDate(isoDate) {
+      if (!isoDate) return "";
+      const parts = isoDate.split("-");
+      if (parts.length !== 3) return isoDate;
+      const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+      const m = months[Number(parts[1]) - 1] || parts[1];
+      return `${m} ${Number(parts[2])}`;
+    }
+
+    function fmtPointLabel(p, unit) {
+      const w = p.weight !== null && p.weight !== undefined ? `${p.weight} ${unit}` : "BW";
+      const r = p.reps !== null && p.reps !== undefined ? `${p.reps} reps` : "";
+      return r ? `${w} × ${r}` : w;
+    }
+
+    function renderExerciseSvg(ex) {
+      const useWeight = ex.hasWeight;
+      const plotPts = ex.points.filter((p) => (useWeight ? p.weight !== null : p.reps !== null));
+      if (plotPts.length === 0) {
+        return `<div class="empty-state" style="padding: 16px;">No numeric data recorded yet.</div>`;
+      }
+
+      const W = 420;
+      const H = 150;
+      const padL = 38;
+      const padR = 16;
+      const padT = 14;
+      const padB = 26;
+      const plotW = W - padL - padR;
+      const plotH = H - padT - padB;
+
+      const vals = plotPts.map((p) => (useWeight ? Number(p.weight) : Number(p.reps)));
+      let minV = Math.min(...vals);
+      let maxV = Math.max(...vals);
+      if (minV === maxV) {
+        const pad = useWeight ? Math.max(2.5, minV * 0.1) : 2;
+        minV = Math.max(0, minV - pad);
+        maxV = maxV + pad;
+      } else {
+        const span = maxV - minV;
+        minV = Math.max(0, minV - span * 0.15);
+        maxV = maxV + span * 0.15;
+      }
+
+      const xFor = (i) =>
+        plotPts.length === 1 ? padL + plotW / 2 : padL + (i / (plotPts.length - 1)) * plotW;
+      const yFor = (v) => padT + plotH - ((v - minV) / (maxV - minV)) * plotH;
+
+      const strokeColor = useWeight ? "#2f81f7" : "#3fb950";
+      const fillColor = useWeight ? "rgba(47, 129, 247, 0.14)" : "rgba(63, 185, 80, 0.14)";
+
+      // Horizontal gridlines (min, mid, max)
+      const gridVals = [minV, (minV + maxV) / 2, maxV];
+      const gridHtml = gridVals
+        .map((gv) => {
+          const y = yFor(gv).toFixed(1);
+          const label = Number.isInteger(gv) ? gv : gv.toFixed(1);
+          return `
+            <line x1="${padL}" y1="${y}" x2="${W - padR}" y2="${y}" stroke="#30363d" stroke-dasharray="3 3" stroke-width="1" />
+            <text x="${padL - 6}" y="${Number(y) + 3.5}" text-anchor="end" fill="#8b949e" font-size="10">${label}</text>
+          `;
+        })
+        .join("");
+
+      const coords = plotPts.map((p, i) => ({
+        x: xFor(i),
+        y: yFor(useWeight ? Number(p.weight) : Number(p.reps)),
+        p,
+      }));
+
+      const linePoints = coords.map((c) => `${c.x.toFixed(1)},${c.y.toFixed(1)}`).join(" ");
+      const areaPath =
+        coords.length > 1
+          ? `M ${coords[0].x.toFixed(1)},${(padT + plotH).toFixed(1)} ` +
+            coords.map((c) => `L ${c.x.toFixed(1)},${c.y.toFixed(1)}`).join(" ") +
+            ` L ${coords[coords.length - 1].x.toFixed(1)},${(padT + plotH).toFixed(1)} Z`
+          : "";
+
+      // X-axis date labels (show up to 4 evenly spaced)
+      const labelIndices = new Set([0, coords.length - 1]);
+      if (coords.length > 3) {
+        labelIndices.add(Math.floor((coords.length - 1) / 2));
+      }
+      const xLabelsHtml = coords
+        .map((c, i) => {
+          if (!labelIndices.has(i) && coords.length > 4) return "";
+          const anchor = i === 0 && coords.length > 1 ? "start" : i === coords.length - 1 && coords.length > 1 ? "end" : "middle";
+          return `<text x="${c.x.toFixed(1)}" y="${H - 6}" text-anchor="${anchor}" fill="#8b949e" font-size="10">${escapeHtml(fmtShortDate(c.p.date))}</text>`;
+        })
+        .join("");
+
+      const dotsHtml = coords
+        .map((c) => {
+          const valText = fmtPointLabel(c.p, ex.unit);
+          const srcTag = c.p.source === "live" ? " · Live" : "";
+          return `
+            <g class="svg-pt" data-date="${escapeHtml(c.p.date + srcTag)}" data-val="${escapeHtml(valText)}" data-x="${c.x.toFixed(1)}" data-y="${c.y.toFixed(1)}">
+              <circle cx="${c.x.toFixed(1)}" cy="${c.y.toFixed(1)}" r="4.2" fill="${strokeColor}" stroke="#161b22" stroke-width="1.8" />
+              <circle cx="${c.x.toFixed(1)}" cy="${c.y.toFixed(1)}" r="13" fill="transparent" style="cursor: pointer;" />
+            </g>
+          `;
+        })
+        .join("");
+
+      return `
+        <div class="chart-wrap">
+          <svg class="chart-svg" viewBox="0 0 ${W} ${H}" role="img" aria-label="${escapeHtml(ex.exercise)} progression chart">
+            ${gridHtml}
+            ${areaPath ? `<path d="${areaPath}" fill="${fillColor}" />` : ""}
+            ${coords.length > 1 ? `<polyline fill="none" stroke="${strokeColor}" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" points="${linePoints}" />` : ""}
+            ${xLabelsHtml}
+            ${dotsHtml}
+          </svg>
+          <div class="chart-tooltip hidden"></div>
+        </div>
+      `;
+    }
+
+    function renderExerciseCard(ex) {
+      const card = document.createElement("div");
+      card.className = "exercise-card";
+
+      const pts = ex.points;
+      const first = pts[0];
+      const latest = pts[pts.length - 1];
+      const latestLabel = fmtPointLabel(latest, ex.unit);
+
+      let deltaHtml = `<span class="delta-pill delta-flat">1 entry</span>`;
+      if (pts.length > 1) {
+        if (ex.hasWeight && first.weight !== null && latest.weight !== null) {
+          const diff = Number((latest.weight - first.weight).toFixed(2));
+          if (diff > 0) {
+            deltaHtml = `<span class="delta-pill delta-up">+${diff} ${escapeHtml(ex.unit)}</span>`;
+          } else if (diff < 0) {
+            deltaHtml = `<span class="delta-pill delta-down">${diff} ${escapeHtml(ex.unit)}</span>`;
+          } else if (first.reps !== null && latest.reps !== null && latest.reps !== first.reps) {
+            const rDiff = latest.reps - first.reps;
+            deltaHtml = `<span class="delta-pill ${rDiff > 0 ? "delta-up" : "delta-down"}">${rDiff > 0 ? "+" : ""}${rDiff} reps</span>`;
+          } else {
+            deltaHtml = `<span class="delta-pill delta-flat">No change</span>`;
+          }
+        } else if (first.reps !== null && latest.reps !== null) {
+          const rDiff = latest.reps - first.reps;
+          if (rDiff > 0) {
+            deltaHtml = `<span class="delta-pill delta-up">+${rDiff} reps</span>`;
+          } else if (rDiff < 0) {
+            deltaHtml = `<span class="delta-pill delta-down">${rDiff} reps</span>`;
+          } else {
+            deltaHtml = `<span class="delta-pill delta-flat">No change</span>`;
+          }
+        }
+      }
+
+      const chipsHtml = pts
+        .slice(-5)
+        .map((p) => `<span class="point-chip">${escapeHtml(fmtShortDate(p.date))}: <strong>${escapeHtml(fmtPointLabel(p, ex.unit))}</strong></span>`)
+        .join("");
+
+      card.innerHTML = `
+        <div class="exercise-card-head">
+          <div>
+            <h3 class="exercise-title">${escapeHtml(ex.exercise)}</h3>
+            <div class="exercise-sub">Latest: <strong>${escapeHtml(latestLabel)}</strong> · ${latest.sets} set${latest.sets > 1 ? "s" : ""}</div>
+          </div>
+          <div class="exercise-badges">
+            ${deltaHtml}
+          </div>
+        </div>
+        ${renderExerciseSvg(ex)}
+        <div class="point-strip">${chipsHtml}</div>
+      `;
+
+      // Wire SVG point hover tooltips
+      const wrap = card.querySelector(".chart-wrap");
+      const svg = card.querySelector(".chart-svg");
+      const tooltip = card.querySelector(".chart-tooltip");
+      if (wrap && svg && tooltip) {
+        svg.querySelectorAll(".svg-pt").forEach((ptEl) => {
+          ptEl.addEventListener("mouseenter", () => {
+            const xPct = (Number(ptEl.dataset.x) / 420) * 100;
+            const yPct = (Number(ptEl.dataset.y) / 150) * 100;
+            tooltip.innerHTML = `<div class="tt-date">${escapeHtml(ptEl.dataset.date)}</div><div><strong>${escapeHtml(ptEl.dataset.val)}</strong></div>`;
+            tooltip.style.left = `${xPct}%`;
+            tooltip.style.top = `${yPct}%`;
+            tooltip.classList.remove("hidden");
+          });
+          ptEl.addEventListener("mouseleave", () => {
+            tooltip.classList.add("hidden");
+          });
+        });
+      }
+
+      return card;
+    }
+
+    function renderProgress() {
+      const data = state.progress;
+      const pillsEl = el("progressWorkoutPills");
+      const gridEl = el("progressGrid");
+      const metaEl = el("progressMetaText");
+
+      pillsEl.innerHTML = "";
+      gridEl.innerHTML = "";
+
+      if (!data || !data.workouts || data.workouts.length === 0) {
+        metaEl.textContent = "";
+        gridEl.innerHTML = `<div class="empty-state" style="grid-column: 1 / -1;">No workout backups found in <code>backups/</code> yet. Update a template to start tracking progress.</div>`;
+        return;
+      }
+
+      if (
+        !state.selectedProgressWorkout ||
+        !data.workouts.some((w) => w.workoutName === state.selectedProgressWorkout)
+      ) {
+        state.selectedProgressWorkout = data.workouts[0].workoutName;
+      }
+
+      for (const w of data.workouts) {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = `workout-pill ${w.workoutName === state.selectedProgressWorkout ? "active" : ""}`;
+        btn.textContent = w.workoutName;
+        btn.addEventListener("click", () => {
+          state.selectedProgressWorkout = w.workoutName;
+          renderProgress();
+        });
+        pillsEl.appendChild(btn);
+      }
+
+      const active = data.workouts.find((w) => w.workoutName === state.selectedProgressWorkout);
+      if (!active) return;
+
+      const rangeText =
+        active.dateRange && active.dateRange.start
+          ? `${fmtShortDate(active.dateRange.start)} → ${fmtShortDate(active.dateRange.end)}`
+          : "";
+      const liveText = data.liveIncluded ? " · +Live" : " · Backups only";
+      metaEl.textContent = `${active.snapshotCount} snapshot${active.snapshotCount === 1 ? "" : "s"}${rangeText ? ` (${rangeText})` : ""}${liveText}`;
+
+      if (!active.exercises || active.exercises.length === 0) {
+        gridEl.innerHTML = `<div class="empty-state" style="grid-column: 1 / -1;">No rep-based exercises found in this workout.</div>`;
+        return;
+      }
+
+      for (const ex of active.exercises) {
+        gridEl.appendChild(renderExerciseCard(ex));
+      }
+    }
+
+    async function loadProgress() {
+      const btn = el("refreshProgressBtn");
+      btn.disabled = true;
+      btn.textContent = "Loading...";
+      showBanner("");
+      try {
+        state.progress = await api("/api/progress");
+        renderProgress();
+      } catch (err) {
+        showBanner(err.message, "error");
+      } finally {
+        btn.disabled = false;
+        btn.textContent = "Refresh";
+      }
+    }
+
+    async function switchTab(tab) {
+      state.activeTab = tab;
+      syncViewVisibility();
+      if (tab === "progress" && !state.progress) {
+        await loadProgress();
+      }
+    }
+
     async function loadPreview() {
       const days = Number(el("daysInput").value) || 7;
       const scanBtn = el("scanBtn");
@@ -1018,6 +1533,10 @@
       }
     });
 
+    el("tabUpdate").addEventListener("click", () => switchTab("update"));
+    el("tabProgress").addEventListener("click", () => switchTab("progress"));
+    el("refreshProgressBtn").addEventListener("click", loadProgress);
+
     el("scanBtn").addEventListener("click", loadPreview);
 
     el("updateSelectedBtn").addEventListener("click", async () => {
@@ -1052,6 +1571,7 @@
         const names = res.results.map((r) => r.workoutName).join(", ");
         const watchMsg = push ? " and queued for watch on next sync" : "";
         showBanner(`Updated ${res.results.length} template(s) (${names})${watchMsg}. Backups saved to backups/.`, "success");
+        state.progress = null;
         await loadPreview();
       } catch (err) {
         showBanner(err.message, "error");

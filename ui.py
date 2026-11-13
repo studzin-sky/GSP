@@ -301,6 +301,180 @@ def _handle_push(payload: dict[str, Any]) -> dict[str, Any]:
     return {"ok": True, "workoutId": wid, "deviceId": device_id}
 
 
+def _parse_snapshot_timestamp(workout: dict[str, Any], filename: str | None = None) -> str:
+    """Return an ISO-like timestamp string for sorting and displaying a workout snapshot."""
+    raw = workout.get("updatedDate") or workout.get("createdDate")
+    if isinstance(raw, str) and raw.strip():
+        return raw.strip().split(".")[0]
+    if filename and len(filename) >= 15:
+        try:
+            parsed = dt.datetime.strptime(filename[:15], "%Y%m%d-%H%M%S")
+            return parsed.strftime("%Y-%m-%dT%H:%M:%S")
+        except ValueError:
+            pass
+    return dt.datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
+
+
+def _extract_workout_exercises(workout: dict[str, Any]) -> dict[str, dict[str, Any]]:
+    """Extract top-weight (or top-reps) entry per exercise from a workout JSON."""
+    by_exercise: dict[str, dict[str, Any]] = {}
+    for seg in workout.get("workoutSegments") or []:
+        for step, iters in gsp.iter_slots(seg.get("workoutSteps") or []):
+            if not gsp.is_reps_step(step):
+                continue
+            key = gsp.step_key(step)
+            name = gsp.fmt_ex(key)
+            raw_weight = step.get("weightValue")
+            weight = round(float(raw_weight), 2) if raw_weight is not None and float(raw_weight) > 0 else None
+            raw_reps = step.get("endConditionValue")
+            reps = int(round(float(raw_reps))) if raw_reps is not None else None
+            unit = "lbs" if gsp.step_weight_unit(step) == "pound" else "kg"
+
+            candidate = {
+                "exercise": name,
+                "weight": weight,
+                "reps": reps,
+                "sets": int(iters),
+                "unit": unit,
+            }
+            existing = by_exercise.get(name)
+            if existing is None or (
+                (candidate["weight"] or 0.0, candidate["reps"] or 0)
+                > (existing["weight"] or 0.0, existing["reps"] or 0)
+            ):
+                by_exercise[name] = candidate
+    return by_exercise
+
+
+def _handle_progress(include_live: bool = True) -> dict[str, Any]:
+    """Build per-workout, per-exercise progression series from backups/ (and live templates if logged in)."""
+    snapshots_by_workout: dict[str, dict[str, Any]] = {}
+
+    def add_snapshot(workout: dict[str, Any], source: str, filename: str | None = None) -> None:
+        wid = workout.get("workoutId")
+        name = (workout.get("workoutName") or f"Workout {wid}" if wid is not None else filename or "Workout").strip()
+        group_key = str(wid) if wid is not None else name
+        ts = _parse_snapshot_timestamp(workout, filename=filename)
+        exercises = _extract_workout_exercises(workout)
+        if not exercises:
+            return
+
+        group = snapshots_by_workout.setdefault(group_key, {
+            "workoutId": wid,
+            "workoutName": name,
+            "snapshots": [],
+        })
+        if name:
+            group["workoutName"] = name
+        group["snapshots"].append({
+            "timestamp": ts,
+            "date": ts[:10],
+            "source": source,
+            "exercises": exercises,
+        })
+
+    if gsp.BACKUP_DIR.is_dir():
+        for path in sorted(gsp.BACKUP_DIR.glob("*.json")):
+            try:
+                data = json.loads(path.read_text(encoding="utf-8"))
+                add_snapshot(data, source="backup", filename=path.name)
+            except Exception:  # noqa: BLE001
+                continue
+
+    live_included = False
+    if include_live:
+        client = _get_client()
+        if client is not None:
+            try:
+                live_workouts = [
+                    w for w in (client.get_workouts(limit=200) or [])
+                    if ((w.get("sportType") or {}).get("sportTypeKey")) in gsp.SUPPORTED_TYPES
+                ]
+                for summary in live_workouts:
+                    wid = summary.get("workoutId")
+                    if wid is None:
+                        continue
+                    full = client.get_workout_by_id(wid)
+                    add_snapshot(full, source="live")
+                live_included = True
+            except Exception:  # noqa: BLE001
+                live_included = False
+
+    workouts_out: list[dict[str, Any]] = []
+    for group in snapshots_by_workout.values():
+        snaps = sorted(group["snapshots"], key=lambda s: (s["timestamp"], 0 if s["source"] == "backup" else 1))
+
+        # Deduplicate consecutive snapshots that have identical exercise weight/reps
+        deduped: list[dict[str, Any]] = []
+        prev_sig: tuple[Any, ...] | None = None
+        for snap in snaps:
+            sig = tuple(
+                (ex, vals["weight"], vals["reps"])
+                for ex, vals in sorted(snap["exercises"].items())
+            )
+            if sig == prev_sig:
+                # If a live snapshot matches the latest backup, upgrade source label to keep it accurate
+                if deduped and snap["source"] == "live":
+                    deduped[-1]["source"] = "live"
+                continue
+            prev_sig = sig
+            deduped.append(snap)
+
+        # Preserve exercise order from the latest snapshot, then any older exercises
+        ordered_names: list[str] = []
+        seen_names: set[str] = set()
+        for snap in reversed(deduped):
+            for ex_name in snap["exercises"]:
+                if ex_name not in seen_names:
+                    seen_names.add(ex_name)
+                    ordered_names.append(ex_name)
+
+        exercises_out: list[dict[str, Any]] = []
+        for ex_name in ordered_names:
+            points: list[dict[str, Any]] = []
+            unit = "kg"
+            has_weight = False
+            for snap in deduped:
+                entry = snap["exercises"].get(ex_name)
+                if entry is None:
+                    continue
+                unit = entry["unit"]
+                if entry["weight"] is not None:
+                    has_weight = True
+                points.append({
+                    "date": snap["date"],
+                    "timestamp": snap["timestamp"],
+                    "weight": entry["weight"],
+                    "reps": entry["reps"],
+                    "sets": entry["sets"],
+                    "source": snap["source"],
+                })
+            if points:
+                exercises_out.append({
+                    "exercise": ex_name,
+                    "unit": unit,
+                    "hasWeight": has_weight,
+                    "points": points,
+                })
+
+        workouts_out.append({
+            "workoutId": group["workoutId"],
+            "workoutName": group["workoutName"],
+            "snapshotCount": len(deduped),
+            "dateRange": {
+                "start": deduped[0]["date"] if deduped else None,
+                "end": deduped[-1]["date"] if deduped else None,
+            },
+            "exercises": exercises_out,
+        })
+
+    workouts_out.sort(key=lambda w: w["workoutName"].lower())
+    return {
+        "workouts": workouts_out,
+        "liveIncluded": live_included,
+    }
+
+
 class GSPRequestHandler(BaseHTTPRequestHandler):
     def log_message(self, fmt: str, *args: Any) -> None:
         # Keep console output concise
@@ -351,6 +525,11 @@ class GSPRequestHandler(BaseHTTPRequestHandler):
                     days = int((qs.get("days") or [gsp.DEFAULT_DAYS])[0])
                     days = max(1, min(days, 90))
                     self._send_json(_handle_preview(days))
+                    return
+                if path == "/api/progress":
+                    qs = urllib.parse.parse_qs(parsed.query)
+                    include_live = (qs.get("live") or ["1"])[0] != "0"
+                    self._send_json(_handle_progress(include_live=include_live))
                     return
         except PermissionError as e:
             self._send_json({"error": str(e)}, HTTPStatus.UNAUTHORIZED)
