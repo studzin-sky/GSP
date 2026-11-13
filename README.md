@@ -18,10 +18,12 @@ cp .env.example .env     # optional settings, gitignored
 ## Usage
 
 ```bash
-./update.sh ui        # launch local web UI (login, preview diffs, edit & push)
+./update.sh ui        # launch local web UI (login, preview diffs, edit & push, progress charts)
 ./update.sh -n        # dry run: show what would change
 ./update.sh           # show changes, confirm, update + queue for watch
 ```
+
+The web UI also includes a **Progress** tab that plots top weight and reps over time from your `backups/` (and live templates when logged in) using inline SVG charts—this works offline even without logging in.
 
 Options: `--days N` (lookback, default 7), `-w "Push Gemini"` (single template),
 `-y` (no prompt), `--no-push` (don't queue updated workouts for the watch).
